@@ -1,7 +1,6 @@
 # animgm
 
-A 2D frame-by-frame animation program built in **GameMaker**, ported from an
-earlier React + Tauri prototype.
+A 2D frame-by-frame animation program built in **GameMaker**
 
 ## Features
 
