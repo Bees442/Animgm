@@ -12,7 +12,6 @@ if (screen == "manager") {
     exit;
 }
 
-// CANVAS AREA (Canvas.css)
 ui_rect(cv_x, cv_y, cv_w, cv_h, COL_BG_CANVAS);
 
 draw_set_alpha(0.3);
@@ -76,7 +75,6 @@ if (sel_active && sel_lifted && sel_float != -1 && surface_exists(sel_float)) {
     gpu_set_tex_filter(false);
 }
 
-// selection outline (marching ants) + transform handles
 if ((sel_active || sel_marquee) && sel_w >= 1 && sel_h >= 1) {
     var _dirs = sel_handle_dirs();
     var _corn = array_create(4);
@@ -155,7 +153,6 @@ if (ui_hover(_bx, _zb_y, 28, 28)) ui_roundrect(_bx, _zb_y, 28, 28, 4, COL_HOVER)
 ui_icon(spr_ic_maximize_2, _bx + 14, _zb_y + 14, 16, COL_TEXT);
 if (ui_clicked(_bx, _zb_y, 28, 28)) editor_fit_canvas();
 
-// TOOLBAR (ToolBar.css) — left, 48px
 ui_rect(0, cv_y, tb_w, cv_h, COL_BG_PANEL);
 ui_rect(tb_w - 1, cv_y, 1, cv_h, COL_BORDER);
 
@@ -305,7 +302,7 @@ var _tf_str = _tf_on
        [string(round(sel_w)), string(round(sel_h))],
        [string(round(sel_rot))]]
     : [["—","—"],["—","—"],["—"]];
-var _tf_fieldidx = [[0,1],[2,3],[4]];   // maps grid cell -> tf field index
+var _tf_fieldidx = [[0,1],[2,3],[4]];
 for (var _g = 0; _g < 3; _g++) {
     draw_set_font(fnt_ui_sm);
     draw_set_colour(COL_TEXT_2);
@@ -353,7 +350,7 @@ if (array_length(layers) > 0) {
     ui_roundrect(_cx0, _py + 8, _cw0, 4, 2, COL_BORDER_LT);
     ui_roundrect(_cx0, _py + 8, _cw0 * _lop, 4, 2, COL_PRIMARY);
     draw_circle_colour(_cx0 + _cw0 * _lop, _py + 10, 6, COL_PRIMARY, COL_PRIMARY, false);
-    if (ui_clicked(_cx0, _py, _cw0, 20)) drag_slider = 2;   // 2 = layer opacity
+    if (ui_clicked(_cx0, _py, _cw0, 20)) drag_slider = 2;
     _py += 20 + 4;
     draw_set_font(fnt_mono_sm);
     draw_set_colour(COL_TEXT_2);
@@ -361,7 +358,6 @@ if (array_length(layers) > 0) {
     _py += 16 + 16;
 }
 
-// TIMELINE (Timeline.css) — bottom, 200px
 ui_rect(0, tl_y, gw, tl_h, COL_BG_PANEL_DK);
 ui_rect(0, tl_y, gw, 1, COL_BORDER);
 
@@ -511,14 +507,13 @@ for (var _l = _l0; _l <= _l1; _l++) {
     ui_rect(0, _ry + row_h - 1, lay_w, 1, COL_BORDER);
 }
 
-// SHAPE PICKER popup (ToolBar.css .shape-picker)
 if (shape_picker_open) {
     var _shape_slot = tool_slot("shape");
     var _sp_y = cv_y + 8 + _shape_slot * 46 - tb_scroll;
     var _sp_x = tb_w + 6;
     var _sp_w = 6 + 4 * 38 - 4 + 6;
     var _sp_h = 6 + 2 * 38 - 4 + 6;
-    ui_roundrect(_sp_x + 2, _sp_y + 6, _sp_w, _sp_h, 6, c_black, 0.32); // shadow
+    ui_roundrect(_sp_x + 2, _sp_y + 6, _sp_w, _sp_h, 6, c_black, 0.32);
     ui_roundrect(_sp_x, _sp_y, _sp_w, _sp_h, 6, COL_BG_PANEL);
     ui_roundrect_outline(_sp_x, _sp_y, _sp_w, _sp_h, 6, COL_BORDER);
     for (var _s = 0; _s < array_length(shape_ids); _s++) {
@@ -534,8 +529,7 @@ if (shape_picker_open) {
     }
 }
 
-// MENU BAR (MenuBar.css) — drawn last so dropdowns sit above everything
-var _mb = title_h;   // menubar sits below the custom titlebar
+var _mb = title_h;
 ui_rect(0, _mb, gw, mbar_h, COL_BG_TOOLBAR);
 ui_rect(0, _mb + mbar_h - 1, gw, 1, COL_BORDER);
 
@@ -588,7 +582,7 @@ if (open_menu != -1) {
     } else if (array_length(_rows) > 0) {
         var _mrh = 8;
         for (var _r = 0; _r < array_length(_rows); _r++) _mrh += (_rows[_r][0] == "-") ? 9 : 26;
-        ui_roundrect(_mrx + 3, _mry + 5, _mrw, _mrh, 4, c_black, 0.5); // shadow
+        ui_roundrect(_mrx + 3, _mry + 5, _mrw, _mrh, 4, c_black, 0.5);
         ui_roundrect(_mrx, _mry, _mrw, _mrh, 4, COL_BG_PANEL);
         ui_roundrect_outline(_mrx, _mry, _mrw, _mrh, 4, COL_BORDER_LT);
         var _yy = _mry + 4;
@@ -637,7 +631,6 @@ if (toast_timer > 0) {
     draw_set_valign(fa_top);
 }
 
-// COLOUR PICKER overlay (in-app HSV, replaces <input type="color">)
 if (picker_open) {
     ui_rect(0, 0, gw, gh, c_black, 0.45);
 
@@ -715,7 +708,6 @@ if (picker_open) {
     draw_set_valign(fa_top);
 }
 
-// LAYER RENAME inline editor  (over the layer row)
 if (rename_open && rename_layer >= 0 && rename_layer < array_length(layers)) {
     var _rr_y = tl_y + tlh_h + rename_layer * row_h - tl_vscroll;
     ui_rect(0, _rr_y, lay_w - 1, row_h, COL_INPUT_BG);
@@ -728,12 +720,11 @@ if (rename_open && rename_layer >= 0 && rename_layer < array_length(layers)) {
     draw_set_valign(fa_top);
 }
 
-// LAYER CONTEXT MENU  (right-click; ContextMenu.tsx)
 if (ctx_open) {
     var _cmw = 210;
     var _cmh = 8;
     for (var _r = 0; _r < array_length(ctx_items); _r++) _cmh += (ctx_items[_r][0] == "-") ? 9 : 30;
-    ui_roundrect(ctx_x + 3, ctx_y + 5, _cmw, _cmh, 8, c_black, 0.4);   // shadow
+    ui_roundrect(ctx_x + 3, ctx_y + 5, _cmw, _cmh, 8, c_black, 0.4);
     ui_roundrect(ctx_x, ctx_y, _cmw, _cmh, 8, COL_BG_PANEL);
     ui_roundrect_outline(ctx_x, ctx_y, _cmw, _cmh, 8, COL_BORDER);
     var _cy2 = ctx_y + 4;
@@ -750,7 +741,7 @@ if (ctx_open) {
             if (_danger) ui_roundrect(ctx_x + 4, _cy2, _cmw - 8, 30, 4, $4444EF, 0.12);
             else         ui_roundrect(ctx_x + 4, _cy2, _cmw - 8, 30, 4, COL_HOVER);
         }
-        var _col = _danger ? $4444EF : COL_TEXT;     // #EF4444 red (BGR) for Delete
+        var _col = _danger ? $4444EF : COL_TEXT;
         ui_icon(_it[1], ctx_x + 12 + 8, _cy2 + 15, 16, _danger ? $4444EF : COL_TEXT_2);
         draw_set_font(fnt_ui);
         draw_set_colour(_col);
@@ -768,17 +759,15 @@ if (ctx_open) {
     }
 }
 
-// UNSAVED-CHANGES DIALOG  (UnsavedChangesModal.tsx) — "Save changes?"
 if (unsaved_open) {
-    ui_rect(0, 0, gw, gh, c_black, 0.8);   // overlay
+    ui_rect(0, 0, gw, gh, c_black, 0.8);
     var _uw = 450, _uh = 210;
     var _ux = (gw - _uw) * 0.5, _uy = (gh - _uh) * 0.5;
     ui_roundrect(_ux + 3, _uy + 6, _uw, _uh, 8, c_black, 0.5);
     ui_roundrect(_ux, _uy, _uw, _uh, 8, COL_BG_PANEL);
     ui_roundrect_outline(_ux, _uy, _uw, _uh, 8, COL_BORDER_LT);
 
-    // warning icon chip (amber, rgba(255,193,7,0.15))
-    ui_roundrect(_ux + 24, _uy + 20, 48, 48, 8, $07C1FF, 0.15);   // #FFC107 (BGR)
+    ui_roundrect(_ux + 24, _uy + 20, 48, 48, 8, $07C1FF, 0.15);
     ui_icon(spr_ic_alert_triangle, _ux + 24 + 24, _uy + 20 + 24, 24, $07C1FF);
     var _uclose_x = _ux + _uw - 24 - 28;
     var _uch = pt_in(_mgx, _mgy, _uclose_x, _uy + 20, 28, 28);
@@ -855,8 +844,7 @@ switch (_cm) {
         draw_line(_mgx - 7, _mgy + 1, _mgx + 7, _mgy + 1);
         draw_line(_mgx + 1, _mgy - 7, _mgx + 1, _mgy + 7);
         break;
-    default:  // "arrow" and "move" both use the custom arrow sprite
-        // sprite origin is the tip (14,6 at 48px) → draw at 0.5 scale (24px)
+    default:
         draw_sprite_ext(spr_cursor, 0, _mgx, _mgy, 0.5, 0.5, 0, c_white, 1);
         break;
 }

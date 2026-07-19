@@ -7,7 +7,7 @@ function editor_export_mp4() {
 }
 
 // Render every frame straight to a surface and hand its pixels to the
-// in-process OpenH264/minimp4 encoder (mp4enc_*, see ext_ffmpeg.cpp) — no PNG
+// in-process OpenH264/minimp4 encoder (mp4enc_*, see export_ext.cpp) — no PNG
 // round-trip through disk and no external ffmpeg.exe process.
 function export_run(_out) {
     show_debug_message("[export] start -> " + string(_out));

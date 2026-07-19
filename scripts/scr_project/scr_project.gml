@@ -133,7 +133,6 @@ function project_save(_path) {
     return true;
 }
 
-/// Load a project from _path into the live document.
 function project_load(_path) {
     if (!file_exists(_path)) return false;
     var _buf = buffer_load(_path);
@@ -198,7 +197,7 @@ function project_load(_path) {
             if (!buf_can_read(_buf, 4)) break;
             _blob_len = buffer_read(_buf, buffer_u32);
         }
-        if (!buf_can_read(_buf, _blob_len)) break;   // truncated blob
+        if (!buf_can_read(_buf, _blob_len)) break;
         if (_li >= array_length(layers) || _fi >= array_length(layers[_li].frames)) {
             buffer_seek(_buf, buffer_seek_relative, _blob_len);
             continue;

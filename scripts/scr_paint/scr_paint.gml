@@ -1,7 +1,3 @@
-// animgm — brush / shape / flood-fill rendering
-
-/// Draw a solid round-capped polyline (hard-edged) at the given scale/offset.
-/// Used both for the live preview and, at 2x, as the source for supersampling.
 function draw_polyline_solid(_pts, _w, _col, _ox, _oy, _mul) {
     var _n = array_length(_pts);
     if (_n == 0) return;
@@ -17,14 +13,12 @@ function draw_polyline_solid(_pts, _w, _col, _ox, _oy, _mul) {
     }
 }
 
-/// Round-capped polyline for LIVE PREVIEW (drawn straight to screen at 1x).
 function draw_polyline_round(_pts, _w, _col) {
     draw_polyline_solid(_pts, _w, _col, 0, 0, 1);
 }
 
-/// Commit an ANTIALIASED brush stroke onto _target via 2x supersampling:
-/// render the stroke solid on a 2x scratch surface, then draw it back at 0.5x
-/// with linear filtering so the edges get smooth, Photoshop-like coverage.
+// Antialiased stroke via 2x supersampling: render solid at 2x, then draw back
+// at 0.5x with linear filtering for smooth, Photoshop-like edge coverage.
 function commit_stroke_aa(_target, _pts, _w, _col) {
     var _n = array_length(_pts);
     if (_n == 0) return;
@@ -41,7 +35,7 @@ function commit_stroke_aa(_target, _pts, _w, _col) {
     var _bh = clamp(ceil(_maxy + _pad), 0, _sh) - _by;
     if (_bw <= 0 || _bh <= 0) return;
 
-    var _ss = 2;   // supersample factor
+    var _ss = 2;
     var _scratch = surface_create(_bw * _ss, _bh * _ss);
     surface_set_target(_scratch);
     draw_clear_alpha(c_black, 0);
@@ -56,7 +50,6 @@ function commit_stroke_aa(_target, _pts, _w, _col) {
     surface_free(_scratch);
 }
 
-/// Simple neighbour-average smoothing (approximates brushSmoothing)
 function stroke_smooth(_pts, _amount) {
     var _passes = floor(_amount / 25);
     for (var _p = 0; _p < _passes; _p++) {
@@ -76,7 +69,6 @@ function stroke_smooth(_pts, _amount) {
     return _pts;
 }
 
-/// Polygon vertices for the shape tool, inside the drag box (x0,y0)-(x1,y1)
 function shape_points(_kind, _x0, _y0, _x1, _y1) {
     var _cx = (_x0 + _x1) * 0.5, _cy = (_y0 + _y1) * 0.5;
     var _rx = abs(_x1 - _x0) * 0.5, _ry = abs(_y1 - _y0) * 0.5;
@@ -110,7 +102,6 @@ function shape_points(_kind, _x0, _y0, _x1, _y1) {
     return _pts;
 }
 
-/// Draw the shape preview / commit (fill + stroke) with current colours
 function draw_shape(_kind, _x0, _y0, _x1, _y1, _fill, _stroke, _sw) {
     if (_kind == "circle" || _kind == "ellipse") {
         var _cx = (_x0 + _x1) * 0.5, _cy = (_y0 + _y1) * 0.5;
@@ -138,19 +129,14 @@ function draw_shape(_kind, _x0, _y0, _x1, _y1, _fill, _stroke, _sw) {
     draw_polyline_round(_closed, _sw, _stroke);
 }
 
-/// True if the pixel at buffer offset _off matches the seed within tolerance
-/// and hasn't already been set to the fill colour.
 function flood_match(_buf, _off, _sr, _sg, _sb, _sa, _tol, _fill) {
     var _p = buffer_peek(_buf, _off, buffer_u32);
-    if (_p == _fill) return false;                    // already filled
+    if (_p == _fill) return false;
     var _r = _p & $FF, _g = (_p >> 8) & $FF, _b = (_p >> 16) & $FF, _a = (_p >> 24) & $FF;
     return abs(_r - _sr) <= _tol && abs(_g - _sg) <= _tol
         && abs(_b - _sb) <= _tol && abs(_a - _sa) <= _tol;
 }
 
-/// Flood-fill the keyframe surface starting at (_sx,_sy) with _col, replacing
-/// the connected region of pixels that match the seed colour (within a small
-/// tolerance). Works on a CPU copy of the surface, then uploads the sub-rect.
 function editor_flood_fill(_kf, _sx, _sy, _col) {
     var _w = canvas_w, _h = canvas_h;
     _sx = floor(_sx); _sy = floor(_sy);
@@ -160,14 +146,15 @@ function editor_flood_fill(_kf, _sx, _sy, _col) {
     var _buf = buffer_create(_w * _h * 4, buffer_fixed, 1);
     buffer_get_surface(_buf, _surf, 0);
 
-    // surface buffer is RGBA little-endian => byte0=R,1=G,2=B,3=A
+    // surface buffer is byte0=R,1=G,2=B,3=A (this project's runtime; see also
+    // the RgbaToI420 comment in export_ext.cpp)
     var _seed = buffer_peek(_buf, (_sy * _w + _sx) * 4, buffer_u32);
     var _fill = colour_get_red(_col) | (colour_get_green(_col) << 8)
               | (colour_get_blue(_col) << 16) | (255 << 24);
     if (_seed == _fill) { buffer_delete(_buf); return; }
 
     var _sr = _seed & $FF, _sg = (_seed >> 8) & $FF, _sb = (_seed >> 16) & $FF, _sa = (_seed >> 24) & $FF;
-    var _tol = 24;   // per-channel tolerance so anti-aliased edges fill too
+    var _tol = 24;
 
     var _stack = ds_stack_create();
     ds_stack_push(_stack, _sx, _sy);
@@ -202,7 +189,6 @@ function editor_flood_fill(_kf, _sx, _sy, _col) {
     }
     ds_stack_destroy(_stack);
 
-    // upload only the affected sub-rect back to the surface
     var _bw = _maxx - _minx + 1, _bh = _maxy - _miny + 1;
     var _sub = buffer_create(_bw * _bh * 4, buffer_fixed, 1);
     for (var _row = 0; _row < _bh; _row++) {
@@ -211,7 +197,6 @@ function editor_flood_fill(_kf, _sx, _sy, _col) {
     var _tmp = surface_create(_bw, _bh);
     buffer_set_surface(_sub, _tmp, 0);
     surface_set_target(_surf);
-    // overwrite the sub-rect exactly (no alpha blend) so filled pixels replace
     gpu_set_blendmode_ext(bm_one, bm_zero);
     draw_surface(_tmp, _minx, _miny);
     gpu_set_blendmode(bm_normal);

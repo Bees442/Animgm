@@ -1,12 +1,8 @@
-// animgm — custom title bar, window controls, unsaved-changes guard
-
-/// Draw the custom title bar (TitleBar.css): 40px, bg #1E1E1E, centred project
-/// title (+ "*" when dirty), and minimize / maximize / close buttons at right.
 function draw_titlebar() {
     var _mgx = device_mouse_x_to_gui(0);
     var _mgy = device_mouse_y_to_gui(0);
-    ui_rect(0, 0, gw, title_h, COL_INPUT_BG);          // #1E1E1E
-    ui_rect(0, title_h - 1, gw, 1, $0F0F0F);           // bottom border
+    ui_rect(0, 0, gw, title_h, COL_INPUT_BG);
+    ui_rect(0, title_h - 1, gw, 1, $0F0F0F);
 
     draw_set_font(fnt_ui);
     draw_set_colour(COL_TEXT_2);
@@ -23,7 +19,7 @@ function draw_titlebar() {
     if (pt_in(_mgx, _mgy, _max_x, 0, 50, title_h)) ui_rect(_max_x, 0, 50, title_h, c_white, 0.08);
     ui_icon(spr_ic_square, _max_x + 25, title_h * 0.5, 13, COL_TEXT_2);
     if (pt_in(_mgx, _mgy, _close_x, 0, 50, title_h)) {
-        ui_rect(_close_x, 0, 50, title_h, $2311E8);    // #E81123 (BGR)
+        ui_rect(_close_x, 0, 50, title_h, $2311E8);
         ui_icon(spr_ic_x, _close_x + 25, title_h * 0.5, 16, c_white);
     } else {
         ui_icon(spr_ic_x, _close_x + 25, title_h * 0.5, 16, COL_TEXT_2);
@@ -32,7 +28,6 @@ function draw_titlebar() {
     draw_set_alpha(1);
 }
 
-/// Toggle a pseudo-maximize that fills the desktop work area.
 function win_toggle_maximize() {
     win_from_x = window_get_x();
     win_from_y = window_get_y();
@@ -50,14 +45,13 @@ function win_toggle_maximize() {
         win_to_h = display_get_height();
         win_maximized = true;
     }
-    win_anim = win_anim_dur;   // Step drives the interpolation
+    win_anim = win_anim_dur;
 }
 
-/// Per-frame smooth maximize/restore. Eases the window rect from from→to.
 function win_anim_update(_dt) {
     if (win_anim <= 0) return;
     win_anim = max(0, win_anim - _dt);
-    var _t = 1 - (win_anim / win_anim_dur);       // 0..1
+    var _t = 1 - (win_anim / win_anim_dur);
     _t = 1 - power(1 - _t, 3);
     var _x = lerp(win_from_x, win_to_x, _t);
     var _y = lerp(win_from_y, win_to_y, _t);
@@ -66,10 +60,6 @@ function win_anim_update(_dt) {
     window_set_rectangle(round(_x), round(_y), round(_w), round(_h));
 }
 
-/// Route a discarding action (quit, open another project, new project) through
-/// the unsaved-changes guard. If the current project has unsaved edits, show the
-/// "Save changes?" dialog and defer _action until the user answers; otherwise
-/// run _action immediately. _action is a function (method) with no arguments.
 function editor_guard_action(_action) {
     if (screen == "editor" && is_dirty) {
         unsaved_action = _action;
@@ -79,18 +69,15 @@ function editor_guard_action(_action) {
     }
 }
 
-/// Called when the user tries to close the app (window X, Escape, menu Quit).
 function editor_request_quit() {
     editor_guard_action(function() { game_end(); });
 }
 
-/// "Yes" — save, then run the pending action (stay open if the save was
-/// cancelled or failed).
 function unsaved_save_and_quit() {
     var _path = project_path;
     if (_path == "") {
         _path = get_save_filename("animgm Project|*.anst", project_name + ".anst");
-        if (_path == "") return;                 // cancelled save -> keep dialog
+        if (_path == "") return;
         if (filename_ext(_path) == "") _path += ".anst";
     }
     if (project_save(_path)) {
@@ -100,7 +87,6 @@ function unsaved_save_and_quit() {
     } else editor_toast("Save failed");
 }
 
-/// "No" — discard changes and run the pending action.
 function unsaved_discard_and_quit() {
     is_dirty = false;
     unsaved_open = false;
@@ -108,7 +94,6 @@ function unsaved_discard_and_quit() {
     if (_a != undefined) _a();
 }
 
-/// "Cancel" — dismiss the dialog and keep working (drop the pending action).
 function unsaved_cancel() {
     unsaved_open = false;
     unsaved_action = undefined;

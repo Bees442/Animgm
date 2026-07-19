@@ -1,6 +1,3 @@
-// animgm — layer operations + right-click context menu
-
-/// Toolbar slot (0-based) of a tool id, or -1 if not present.
 function tool_slot(_id) {
     for (var _i = 0; _i < array_length(tool_ids); _i++) {
         if (tool_ids[_i] == _id) return _i;
@@ -8,7 +5,6 @@ function tool_slot(_id) {
     return -1;
 }
 
-/// Deep-copy a keyframe struct (surface flushed to cbuf) for layer duplication.
 function kf_clone(_kf) {
     if (_kf == -1) return -1;
     kf_backup(_kf, true);
@@ -25,7 +21,7 @@ function kf_clone(_kf) {
 
 function layer_add(_name = "") {
     if (_name == "") _name = "Layer " + string(array_length(layers) + 1);
-    array_insert(layers, 0, layer_make(_name, total_frames));   // new layer on top
+    array_insert(layers, 0, layer_make(_name, total_frames));
     selected_layer = 0;
     is_dirty = true;
 }
@@ -39,7 +35,7 @@ function layer_duplicate(_li) {
     for (var _i = 0; _i < array_length(_src.frames); _i++) {
         _copy.frames[_i] = kf_clone(_src.frames[_i]);
     }
-    array_insert(layers, _li, _copy);        // insert above the source
+    array_insert(layers, _li, _copy);
     selected_layer = _li;
     is_dirty = true;
 }
@@ -54,7 +50,6 @@ function layer_delete(_li) {
     is_dirty = true;
 }
 
-/// Move a layer up (toward index 0 = top) or down in the stack.
 function layer_move(_li, _dir) {
     var _to = _li + _dir;
     if (_li < 0 || _li >= array_length(layers) || _to < 0 || _to >= array_length(layers)) return;
@@ -65,7 +60,6 @@ function layer_move(_li, _dir) {
     is_dirty = true;
 }
 
-/// Open the layer context menu at (_x,_y) for layer _li.
 function layer_context_open(_x, _y, _li) {
     ctx_layer = _li;
     selected_layer = _li;
@@ -79,7 +73,6 @@ function layer_context_open(_x, _y, _li) {
         ["-", -1, "", false],
         ["Delete", spr_ic_trash_2, "Del", true],
     ];
-    // clamp so the menu stays on-screen
     var _mw = 210;
     var _mh = 8; for (var _i = 0; _i < array_length(ctx_items); _i++) _mh += (ctx_items[_i][0] == "-") ? 9 : 30;
     ctx_x = clamp(_x, 0, gw - _mw);

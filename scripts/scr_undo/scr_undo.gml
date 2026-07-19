@@ -1,12 +1,8 @@
-// animgm — undo / redo (raster snapshots)
-
-/// Capture the keyframe's current pixels as a snapshot (cropped ARGB sub-rect).
-/// Ensures the backing store is up to date first so it reflects on-screen state.
 function editor_snapshot(_li, _fi) {
     var _kf = layers[_li].frames[_fi];
     var _snap = { li: _li, fi: _fi, existed: (_kf != -1), cbuf: -1, bx: 0, by: 0, bw: 0, bh: 0 };
     if (_kf != -1) {
-        kf_backup(_kf);   // flush live surface into _kf.cbuf
+        kf_backup(_kf);
         _snap.bx = _kf.bx; _snap.by = _kf.by; _snap.bw = _kf.bw; _snap.bh = _kf.bh;
         if (_kf.cbuf != -1) {
             var _sz = buffer_get_size(_kf.cbuf);
@@ -19,7 +15,7 @@ function editor_snapshot(_li, _fi) {
 
 function editor_push_undo(_li, _fi) {
     if (_fi == -1) _fi = current_frame;
-    is_dirty = true;   // any edit marks the document unsaved
+    is_dirty = true;
     array_push(undo_stack, editor_snapshot(_li, _fi));
     if (array_length(undo_stack) > 30) {
         var _old = undo_stack[0];

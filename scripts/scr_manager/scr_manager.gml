@@ -1,12 +1,9 @@
-
-/// Enter the editor with the current document.
 function pm_open_editor() {
     screen = "editor";
     tb_scroll = 0; tl_scroll = 0; tl_vscroll = 0;
     editor_fit_canvas();
 }
 
-/// Open an existing .anst via the native file dialog.
 function pm_browse_open() {
     var _path = get_open_filename("animgm Project|*.anst", "");
     if (_path == "") return;
@@ -58,7 +55,7 @@ function pm_step() {
             }
             else if (_ctrl && keyboard_check_pressed(ord("V"))) {
                 var _paste = clipboard_has_text() ? clipboard_get_text() : "";
-                if (_numeric) {  // keep digits only
+                if (_numeric) {
                     var _clean = "";
                     for (var _i = 1; _i <= string_length(_paste); _i++) {
                         var _c = string_char_at(_paste, _i);
@@ -222,8 +219,6 @@ function pm_step() {
     }
 }
 
-/// Load (once, cached) the thumbnail sprite for a recent entry, or -1 if none.
-/// Cache key is the thumb path; a missing file caches -1 so we don't retry.
 function pm_thumb_sprite(_rp) {
     var _tp = variable_struct_exists(_rp, "thumb") ? _rp.thumb : "";
     if (_tp == "" || !file_exists(_tp)) return -1;
@@ -243,17 +238,14 @@ function pm_field_get(_f) {
     }
     return "";
 }
-/// Select the entire contents of the currently focused field.
 function pm_field_select_all() {
     if (np_field == -1) return;
     np_sel_a = 0;
     np_sel_b = string_length(pm_field_get(np_field));
 }
 
-/// Character index (0..len) in field _f nearest to GUI x-coordinate _mx.
-/// Text is drawn at field-left + 10px with fnt_ui.
 function pm_field_char_at(_f, _mx) {
-    var _rc = np_field_rect[_f];        // [x, y, w, h] filled by pm_field
+    var _rc = np_field_rect[_f];
     var _tx = _rc[0] + 10;
     var _val = pm_field_get(_f);
     var _len = string_length(_val);
@@ -286,8 +278,6 @@ function pm_draw() {
     var _cx = (gw - _cw) * 0.5;
     var _y = max(title_h + 24, (gh - 620) * 0.5);
 
-    // Pre-rendered crisp title sprite (avoids blur from upscaling a bitmap font).
-    // Drawn at a fixed target width; origin is already centred on the sprite.
     draw_set_halign(fa_center);
     draw_set_valign(fa_top);
     var _title_scale = 340 / sprite_get_width(spr_title);
@@ -353,7 +343,7 @@ function pm_draw() {
             var _rx = _grid_x + _col * (_cardw + _cgap);
             var _ry = _y + 72 + _row * (_cardh + _thumb_h - 60 + _cgap);
             var _rh = _thumb_h + 74;
-            if (_ry + _rh > _y + _sec_h - 12) break;  // clip to section
+            if (_ry + _rh > _y + _sec_h - 12) break;
             array_push(pm_card_rect, [_rx, _ry, _cardw, _rh]);
             var _hover = pt_in(_mgx, _mgy, _rx, _ry, _cardw, _rh);
             ui_roundrect(_rx, _ry, _cardw, _rh, 6, COL_BG_PANEL_DK);
@@ -400,9 +390,6 @@ function pm_draw() {
     draw_set_alpha(1);
 }
 
-/// Icon + title + subtitle inside an action card.
-/// Chips mirror WelcomeScreen.css: primary = rgba(255,255,255,0.2),
-/// non-primary = rgba(0,164,239,0.15); icon white on primary, blue otherwise.
 function pm_action_card_content(_x, _y, _w, _spr, _title, _sub, _primary) {
     var _icon_col = _primary ? c_white : COL_PRIMARY;
     var _chip = 56;
@@ -422,11 +409,10 @@ function pm_action_card_content(_x, _y, _w, _spr, _title, _sub, _primary) {
     draw_set_halign(fa_left);
 }
 
-/// New Project modal (NewProjectModal.tsx).
 function pm_draw_newproject() {
     var _mgx = device_mouse_x_to_gui(0);
     var _mgy = device_mouse_y_to_gui(0);
-    ui_rect(0, 0, gw, gh, c_black, 0.8);   // overlay
+    ui_rect(0, 0, gw, gh, c_black, 0.8);
 
     var _mw = 520, _mh = 470;
     var _mx = (gw - _mw) * 0.5, _my = (gh - _mh) * 0.5;
@@ -513,7 +499,7 @@ function pm_draw_newproject() {
         var _ly = np_preset_box[1] + np_preset_box[3] + 2;
         var _ih = 34;
         var _lh = array_length(np_presets) * _ih + 8;
-        ui_roundrect(_lx + 2, _ly + 3, _lw, _lh, 6, c_black, 0.4);   // shadow
+        ui_roundrect(_lx + 2, _ly + 3, _lw, _lh, 6, c_black, 0.4);
         ui_roundrect(_lx, _ly, _lw, _lh, 6, COL_BG_PANEL);
         ui_roundrect_outline(_lx, _ly, _lw, _lh, 6, COL_BORDER_LT);
         var _iy = _ly + 4;
@@ -538,8 +524,6 @@ function pm_draw_newproject() {
     }
 }
 
-/// One labelled text field; returns its input rect [x,y,w,h]. Highlights when
-/// focused (np_field), renders the text selection and a blinking caret.
 function pm_field(_x, _y, _w, _label, _val, _idx, _hint) {
     draw_set_font(fnt_ui_sm);
     draw_set_colour(COL_TEXT_2);

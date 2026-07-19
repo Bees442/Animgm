@@ -1,7 +1,3 @@
-// animgm — in-app HSV colour picker
-
-/// Open the in-app colour picker overlay for "stroke" or "fill".
-/// (GameMaker has no native colour dialog, so we draw our own HSV picker.)
 function editor_pick_colour(_which) {
     color_target = _which;
     var _cur = (_which == "fill") ? fill_color : stroke_color;
@@ -20,7 +16,6 @@ function editor_pick_colour(_which) {
     picker_drag = -1;
 }
 
-/// HSV (h 0-360, s/v 0-1) -> GM colour
 function hsv_to_col(_h, _s, _v) {
     var _c = _v * _s;
     var _x = _c * (1 - abs(((_h / 60) mod 2) - 1));

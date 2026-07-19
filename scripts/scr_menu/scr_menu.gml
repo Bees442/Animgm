@@ -1,6 +1,3 @@
-// animgm — menu bar actions: file / edit / save / open / import
-
-/// rows: [label, shortcut]; ["-"] is a divider. Window menu is drawn specially.
 function editor_menu_rows(_idx) {
     switch (menu_names[_idx]) {
         case "File": return [
@@ -20,7 +17,6 @@ function editor_menu_rows(_idx) {
 function editor_menu_action(_idx, _label) {
     switch (_label) {
         case "New Project":
-            // back to the Project Manager to configure a new project (guarded)
             editor_guard_action(editor_do_new_project);
             break;
         case "Open...":  editor_open_dialog(); break;
@@ -37,8 +33,6 @@ function editor_menu_action(_idx, _label) {
     }
 }
 
-/// Save the current project. When _as is true, or there's no path yet, prompt
-/// for a location with the native Save dialog.
 function editor_save(_as) {
     var _path = project_path;
     if (_as || _path == "") {
@@ -50,17 +44,12 @@ function editor_save(_as) {
     else editor_toast("Save failed");
 }
 
-/// Import an image (PNG/JPG/BMP) via the native dialog and stamp it onto the
-/// current layer's keyframe, scaled to fit the canvas and centred.
 function editor_import_image() {
     var _path = get_open_filename("Images|*.png;*.jpg;*.jpeg;*.bmp;*.gif", "");
     if (_path == "") return;
-    editor_place_image(_path, true);   // menu import -> onto its own new layer
+    editor_place_image(_path, true);
 }
 
-/// Load an image from _path and stamp it (scaled to fit, centred) onto the
-/// current keyframe. When _new_layer is true, first add a dedicated layer named
-/// after the file so the image sits on its own layer.
 function editor_place_image(_path, _new_layer) {
     if (!file_exists(_path)) { editor_toast("File not found"); return; }
     var _ext = string_lower(filename_ext(_path));
@@ -73,14 +62,14 @@ function editor_place_image(_path, _new_layer) {
 
     var _iw = sprite_get_width(_spr);
     var _ih = sprite_get_height(_spr);
-    var _sc = min(canvas_w / _iw, canvas_h / _ih, 1);   // fit, never upscale
+    var _sc = min(canvas_w / _iw, canvas_h / _ih, 1);
     var _dw = _iw * _sc, _dh = _ih * _sc;
     var _dx = (canvas_w - _dw) * 0.5;
     var _dy = (canvas_h - _dh) * 0.5;
 
     if (_new_layer) {
         var _lname = filename_change_ext(filename_name(_path), "");
-        layer_add(_lname);              // adds on top and selects it
+        layer_add(_lname);
     } else if (array_length(layers) == 0 || layers[selected_layer].locked) {
         editor_toast("Layer is locked");
         sprite_delete(_spr);
@@ -99,16 +88,13 @@ function editor_place_image(_path, _new_layer) {
     editor_toast("Imported " + filename_name(_path));
 }
 
-/// Open a project via native dialog, replacing the current document.
 function editor_open_dialog() {
     var _path = get_open_filename("animgm Project|*.anst", "");
     if (_path == "") return;
-    // stash the path on the instance, then guard the discard before loading
     pending_open_path = _path;
     editor_guard_action(editor_do_open_pending);
 }
 
-/// Return to the Project Manager with the New Project modal open (deferred).
 function editor_do_new_project() {
     screen = "manager";
     recent_projects = project_load_recent();
@@ -117,7 +103,6 @@ function editor_do_new_project() {
     np_field = -1; np_preset_open = false;
 }
 
-/// Load the project stashed in pending_open_path (deferred through the guard).
 function editor_do_open_pending() {
     var _p = pending_open_path;
     pending_open_path = "";

@@ -18,7 +18,6 @@ while (dnd_count() > 0) {
     if (_drop == "") break;
     var _dext = string_lower(filename_ext(_drop));
     if (_dext == ".anst") {
-        // dropping a project opens it (guarded if there are unsaved edits)
         if (screen == "editor") { pending_open_path = _drop; editor_guard_action(editor_do_open_pending); }
         else if (project_load(_drop)) { recent_projects = project_load_recent(); screen = "editor"; editor_fit_canvas(); }
     } else if (screen == "editor") {
@@ -34,7 +33,7 @@ if (mouse_check_button_pressed(mb_left)) {
         editor_request_quit();
         exit;
     } else if (pt_in(_mgx, _mgy, _tb_max_x, 0, 50, title_h)) {
-        if (win_anim <= 0) win_toggle_maximize();     // ignore while animating
+        if (win_anim <= 0) win_toggle_maximize();
     } else if (pt_in(_mgx, _mgy, _tb_min_x, 0, 50, title_h)) {
         window_minimize();
     } else if (pt_in(_mgx, _mgy, 0, 0, gw - 150, title_h)) {
@@ -61,7 +60,6 @@ if (win_drag) {
     }
 }
 
-// F11 toggles maximize/restore (with the smooth animation)
 if (keyboard_check_pressed(vk_f11) && win_anim <= 0) win_toggle_maximize();
 
 if (screen == "manager") {
@@ -69,9 +67,6 @@ if (screen == "manager") {
     exit;
 }
 
-// Surface LRU: evict keyframes that Draw did not touch last epoch (their pixels
-// stay safe in the compressed backing store), then advance the epoch. Skipped
-// while a stroke/erase/shape is mid-drag so we never free an in-use target.
 if (!is_drawing && !erasing && !shape_drag) editor_evict_surfaces();
 kf_epoch++;
 
@@ -83,7 +78,6 @@ var _dt = delta_time / 1000000;
 if (toast_timer > 0) toast_timer -= _dt;
 
 if (unsaved_open) {
-    // geometry must match Draw_64
     var _uw = 450, _uh = 210;
     var _ux = (gw - _uw) * 0.5, _uy = (gh - _uh) * 0.5;
     var _by = _uy + _uh - 24 - 36;
@@ -103,7 +97,6 @@ if (unsaved_open) {
     exit;
 }
 
-// Escape in the editor (nothing else open) asks to quit via the guard
 if (screen == "editor" && keyboard_check_pressed(vk_escape)
     && !ctx_open && !rename_open && !picker_open && open_menu == -1
     && !shape_picker_open && !editing_frames && !sel_active) {
@@ -120,7 +113,6 @@ if (sel_active && current_frame != sel_last_frame) {
 sel_last_frame = current_frame;
 
 if (picker_open) {
-    // geometry (must match Draw_64)
     var _pw2 = 260, _ph2 = 300;
     var _px2 = clamp((gw - _pw2) * 0.5, 8, gw - _pw2 - 8);
     var _py2 = clamp((gh - _ph2) * 0.5, mbar_h + 8, gh - _ph2 - 8);
@@ -132,11 +124,11 @@ if (picker_open) {
         if (pt_in(_mgx, _mgy, _sv_x, _sv_y, _sv_w, _sv_h)) picker_drag = 0;
         else if (pt_in(_mgx, _mgy, _sv_x, _hue_y, _sv_w, _hue_h)) picker_drag = 1;
         else if (pt_in(_mgx, _mgy, _px2 + _pw2 - 16 - 90, _ok_y, 90, 30)) {
-            editor_apply_picker(); picker_open = false;   // OK
+            editor_apply_picker(); picker_open = false;
         } else if (pt_in(_mgx, _mgy, _px2 + 16, _ok_y, 90, 30)) {
-            picker_open = false;                           // Cancel
+            picker_open = false;
         } else if (!pt_in(_mgx, _mgy, _px2, _py2, _pw2, _ph2)) {
-            picker_open = false;                           // click-away cancels
+            picker_open = false;
         }
     }
     if (picker_drag == 0) {
@@ -145,7 +137,7 @@ if (picker_open) {
     } else if (picker_drag == 1) {
         pick_h = clamp((_mgx - _sv_x) / _sv_w, 0, 1) * 360;
     }
-    if (picker_drag != -1) editor_apply_picker();          // live preview
+    if (picker_drag != -1) editor_apply_picker();
     if (!_down) picker_drag = -1;
     if (keyboard_check_pressed(vk_enter))  { editor_apply_picker(); picker_open = false; }
     if (keyboard_check_pressed(vk_escape)) picker_open = false;
@@ -175,13 +167,13 @@ if (ctx_open) {
         for (var _r = 0; _r < array_length(ctx_items); _r++) {
             var _rh = (ctx_items[_r][0] == "-") ? 9 : 30;
             if (ctx_items[_r][0] != "-" && pt_in(_mgx, _mgy, ctx_x, _yy, _mw, _rh)) {
-                layer_context_action(ctx_items[_r][0]);   // sets ctx_open=false
+                layer_context_action(ctx_items[_r][0]);
                 _inside = true;
                 break;
             }
             _yy += _rh;
         }
-        if (!_inside) ctx_open = false;   // click outside closes
+        if (!_inside) ctx_open = false;
         ui_click_used = true;
     }
     if (keyboard_check_pressed(vk_escape)) ctx_open = false;
@@ -189,7 +181,7 @@ if (ctx_open) {
 }
 
 if (mouse_check_button_pressed(mb_right)) {
-    var _lp_y = tl_y + tlh_h;                     // layers panel top
+    var _lp_y = tl_y + tlh_h;
     var _rows_area = tl_h - tlh_h;
     if (pt_in(_mgx, _mgy, 0, _lp_y, lay_w, _rows_area)) {
         var _l = floor((_mgy - _lp_y + tl_vscroll) / row_h);
@@ -200,10 +192,9 @@ if (mouse_check_button_pressed(mb_right)) {
     }
 }
 
-// canvas origin (top-left of the white canvas, GUI space)
 var _ox = cv_x + (cv_w - canvas_w * zoom) * 0.5 + pan_x;
 var _oy = cv_y + (cv_h - canvas_h * zoom) * 0.5 + pan_y;
-var _cmx = (_mgx - _ox) / zoom;  // mouse in canvas coords
+var _cmx = (_mgx - _ox) / zoom;
 var _cmy = (_mgy - _oy) / zoom;
 
 if (is_playing) {
@@ -302,7 +293,7 @@ for (var _i = 0; _i < array_length(menu_names); _i++) {
     _menu_w[_i] = string_width(menu_names[_i]) + 24;
     _mx_acc += _menu_w[_i] + 4;
 }
-menubar_x = _menu_x;   // cached for Draw
+menubar_x = _menu_x;
 menubar_w = _menu_w;
 
 if (_pressed && !ui_click_used) {
@@ -390,7 +381,7 @@ if (_pressed && sel_active && tf_edit == -1 && !ui_click_used) {
         var _rc = tf_rects[_fi];
         if (pt_in(_mgx, _mgy, _rc[0], _rc[1], _rc[2], _rc[3])) {
             tf_edit = _fi;
-            tf_text = "";                 // start empty; type a fresh value
+            tf_text = "";
             keyboard_string = "";
             ui_click_used = true;
             break;
@@ -398,8 +389,8 @@ if (_pressed && sel_active && tf_edit == -1 && !ui_click_used) {
     }
 }
 
-var _fr_x = lay_w;                    // frames area left edge (gui)
-var _fr_y = tl_y + tlh_h;             // ruler top
+var _fr_x = lay_w;
+var _fr_y = tl_y + tlh_h;
 var _over_ruler  = pt_in(_mgx, _mgy, _fr_x, _fr_y, gw - lay_w, ruler_h);
 var _over_frames = pt_in(_mgx, _mgy, _fr_x, _fr_y + ruler_h, gw - lay_w, tl_h - tlh_h - ruler_h);
 
@@ -472,7 +463,7 @@ if (_over_canvas && _pressed && !panning && !ui_click_used) {
             if (_layer_ok) {
                 var _hit = -1;
                 if (sel_active) {
-                    var _hs = 6;   // handle half-size in px (matches Draw)
+                    var _hs = 6;
                     var _dirs = sel_handle_dirs();
                     for (var _hi = 0; _hi < 8; _hi++) {
                         var _hp = sel_handle_pos(_dirs[_hi][0], _dirs[_hi][1]);
@@ -512,7 +503,7 @@ if (_over_canvas && _pressed && !panning && !ui_click_used) {
         case "brush":
             if (_layer_ok) {
                 is_drawing = true;
-                pen_x = _cmx; pen_y = _cmy;      // pen starts under the cursor
+                pen_x = _cmx; pen_y = _cmy;
                 stroke_pts = [[_cmx, _cmy]];
                 ui_click_used = true;
             }
@@ -541,7 +532,7 @@ if (_over_canvas && _pressed && !panning && !ui_click_used) {
             ui_click_used = true;
             break;
         case "eyedropper": {
-            var _col = make_colour_rgb(255, 255, 255); // canvas background
+            var _col = make_colour_rgb(255, 255, 255);
             if (_cmx >= 0 && _cmy >= 0 && _cmx < canvas_w && _cmy < canvas_h) {
                 for (var _li = 0; _li < array_length(layers); _li++) {
                     if (!layers[_li].visible) continue;
@@ -569,10 +560,8 @@ if (_over_canvas && _pressed && !panning && !ui_click_used) {
     }
 }
 
-// freehand stroke: collect points via the stabilizer (pen trails the cursor)
 if (is_drawing) {
-    // Stabilizer: ease the pen toward the cursor (brush_smoothing 0..100 -> follow speed)
-    var _follow = lerp(1.0, 0.12, brush_smoothing / 100);   // 1 = instant, .12 = laggy
+    var _follow = lerp(1.0, 0.12, brush_smoothing / 100);
     pen_x += (_cmx - pen_x) * _follow;
     pen_y += (_cmy - pen_y) * _follow;
 
@@ -643,7 +632,7 @@ if (shape_drag) {
     }
 }
 
-sel_ants += _dt * 8;   // marching-ants phase
+sel_ants += _dt * 8;
 
 if (sel_marquee) {
     var _mx = clamp(_cmx, 0, canvas_w);
@@ -677,14 +666,14 @@ if (sel_xform != -1) {
         var _gcy = sel_grab_y + sel_grab_h * 0.5;
         var _ddx = _cmx - _gcx, _ddy = _cmy - _gcy;
         var _c = dcos(sel_rot), _s = dsin(sel_rot);
-        var _lx = _ddx * _c - _ddy * _s;    // local pointer offset from centre
+        var _lx = _ddx * _c - _ddy * _s;
         var _ly = _ddx * _s + _ddy * _c;
         var _neww = sel_grab_w, _newh = sel_grab_h;
         if (_hx != 0) _neww = max(4, abs(_lx - (-_hx * sel_grab_w * 0.5)));
         if (_hy != 0) _newh = max(4, abs(_ly - (-_hy * sel_grab_h * 0.5)));
         var _dw = (_hx != 0) ? (_neww - sel_grab_w) : 0;
         var _dh = (_hy != 0) ? (_newh - sel_grab_h) : 0;
-        var _lcx = _hx * _dw * 0.5;   // centre shift in local space
+        var _lcx = _hx * _dw * 0.5;
         var _lcy = _hy * _dh * 0.5;
         var _rc = dcos(-sel_rot), _rs = dsin(-sel_rot);
         var _wcx = _gcx + _lcx * _rc - _lcy * _rs;

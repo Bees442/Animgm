@@ -25,7 +25,7 @@
   },
   "name":"animgm",
   "resources":[
-    {"id":{"name":"ext_ffmpeg","path":"extensions/ext_ffmpeg/ext_ffmpeg.yy",},},
+    {"id":{"name":"ext_export","path":"extensions/ext_export/ext_export.yy",},},
     {"id":{"name":"fnt_mono_sm","path":"fonts/fnt_mono_sm/fnt_mono_sm.yy",},},
     {"id":{"name":"fnt_mono","path":"fonts/fnt_mono/fnt_mono.yy",},},
     {"id":{"name":"fnt_title","path":"fonts/fnt_title/fnt_title.yy",},},
