@@ -49,6 +49,6 @@ per-keyframe raster blobs. Frames are stored as the deflate-compressed ARGB
 
 - **Export to more formats** — PNG sequence, GIF, WebM (currently MP4 only).
 - **Audio import** — load a soundtrack and mux it into MP4 exports.
-- **Auto-select (magic wand)** — select a region by colour similarity, not
+- **Auto-select** — select a region by colour similarity, not
   just the rectangular marquee.
 - **Skeletal animation** — bones, hierarchy, and pixel-to-bone binding as an
