@@ -55,4 +55,5 @@ function editor_new_project() {
     undo_stack = [];
     redo_stack = [];
     tl_scroll  = 0;
+    tl_follow_frame = -1;
 }
