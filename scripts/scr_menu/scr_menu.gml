@@ -3,7 +3,7 @@ function editor_menu_rows(_idx) {
         case "File": return [
             ["New Project", "Ctrl+N"], ["Open...", "Ctrl+O"], ["-"],
             ["Save", "Ctrl+S"], ["Save As...", "Ctrl+Shift+S"], ["-"],
-            ["Import Image...", ""], ["Export...", "Ctrl+E"],
+            ["Import Image...", ""], ["Import Audio...", ""], ["Export...", "Ctrl+E"],
         ];
         case "Edit": return [
             ["Undo", "Ctrl+Z"], ["Redo", "Ctrl+Y"], ["-"],
@@ -29,6 +29,7 @@ function editor_menu_action(_idx, _label) {
         case "Paste":  sel_paste();  break;
         case "Delete": sel_delete(); break;
         case "Import Image...": editor_import_image(); break;
+        case "Import Audio...": editor_import_audio(); break;
         case "Export...": editor_export_mp4(); break;
     }
 }
@@ -86,6 +87,12 @@ function editor_place_image(_path, _new_layer) {
     _kf.dirty = true; kf_backup(_kf);
     sprite_delete(_spr);
     editor_toast("Imported " + filename_name(_path));
+}
+
+function editor_import_audio() {
+    var _path = get_open_filename("Audio|*.wav;*.ogg;*.mp3", "");
+    if (_path == "") return;
+    audio_import(_path);
 }
 
 function editor_open_dialog() {

@@ -13,6 +13,19 @@ function editor_snapshot(_li, _fi) {
     return _snap;
 }
 
+// Frees every snapshot's compressed buffer before discarding the stacks —
+// plain `undo_stack = []` would orphan those buffers (they're not GC'd).
+function undo_clear() {
+    for (var _i = 0; _i < array_length(undo_stack); _i++) {
+        if (undo_stack[_i].cbuf != -1) buffer_delete(undo_stack[_i].cbuf);
+    }
+    for (var _i = 0; _i < array_length(redo_stack); _i++) {
+        if (redo_stack[_i].cbuf != -1) buffer_delete(redo_stack[_i].cbuf);
+    }
+    undo_stack = [];
+    redo_stack = [];
+}
+
 function editor_push_undo(_li, _fi) {
     if (_fi == -1) _fi = current_frame;
     is_dirty = true;

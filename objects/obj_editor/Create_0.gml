@@ -119,12 +119,22 @@ clip_w = 0; clip_h = 0;
 sel_ants = 0;
 sel_last_frame = 0;
 
+tween_active    = false;
+tween_li        = -1;
+tween_start_fr  = 0;
+tween_end_fr    = 0;
+tween_buf       = -1;          // persistent ARGB copy of the lifted pixels
+tween_fw = 0; tween_fh = 0;    // original pixel dimensions of tween_buf
+tween_start_x = 0; tween_start_y = 0; tween_start_w = 0; tween_start_h = 0; tween_start_rot = 0;
+
 window_set_cursor(cr_none);
 cursor_mode = "arrow";
 
 ctx_open   = false;
 ctx_x = 0; ctx_y = 0;
+ctx_kind   = "layer";         // "layer" | "frame" | "audio" — which menu ctx_items belongs to
 ctx_layer  = -1;
+ctx_fr_li  = -1; ctx_fr_fi = -1;
 ctx_items  = [];              // [label, icon, shortcut, danger] rows, "-" = divider
 rename_open = false;
 rename_text = "";
@@ -148,6 +158,7 @@ win_from_x = 0; win_from_y = 0; win_from_w = 0; win_from_h = 0;
 win_to_x = 0; win_to_y = 0; win_to_w = 0; win_to_h = 0;
 
 tl_scroll  = 0;
+tl_follow_frame = current_frame;
 tl_vscroll = 0;
 tb_scroll  = 0;
 tb_content_h = 8 + array_length(tool_ids) * 46 + 17 + 60 + 8;
@@ -167,8 +178,28 @@ picker_drag  = -1;
 pick_h = 0; pick_s = 0; pick_v = 0;
 
 gw = 0; gh = 0;
-mbar_h = 32; tb_w = 48; pp_w = 280; tl_h = 200; tlh_h = 32;
+audio_h = 28;
+mbar_h = 32; tb_w = 48; pp_w = 280; tl_h = 200 + audio_h; tlh_h = 32;
 lay_w = 180; ruler_h = 24; cell_w = 20; row_h = 24;
 cv_x = 0; cv_y = 0; cv_w = 0; cv_h = 0; tl_y = 0;
+
+audio_path      = "";
+audio_kind      = "";
+audio_sound     = -1;
+audio_file_buf  = -1;
+audio_instance  = -1;
+audio_duration  = 0;
+audio_trim_start = 0;         // seconds into the source file where the clip begins
+audio_trim_end   = 0;         // seconds into the source file where the clip ends
+audio_offset_fr = 0;
+audio_drag      = false;
+audio_drag_mx0  = 0;
+audio_drag_off0 = 0;
+audio_resize       = false;
+audio_resize_side  = 0;       // 1 = left handle (trim start), 2 = right handle (trim end)
+audio_resize_mx0   = 0;
+audio_resize_start0 = 0;
+audio_resize_end0   = 0;
+audio_resize_off0   = 0;
 
 recent_projects = project_load_recent();

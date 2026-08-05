@@ -18,6 +18,7 @@
 #macro COL_FRAME_HL     $F6823B   // rgba(59,130,246,*) frame cell highlight
 #macro COL_INPUT_BG     $1E1E1E
 #macro COL_BTN_SEC_H    $4A4A4A   // btn-secondary hover
+#macro COL_TWEEN        $DD66AA   // #AA66DD purple, Animate-style tween span
 
 #macro KF_SURFACE_GRACE  90   // keep an unused surface alive this many epochs
 #macro KF_SURFACE_BUDGET 64   // hard cap on simultaneously live surfaces

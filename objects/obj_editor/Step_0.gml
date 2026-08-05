@@ -104,7 +104,7 @@ if (screen == "editor" && keyboard_check_pressed(vk_escape)
     exit;
 }
 
-if (sel_active && current_frame != sel_last_frame) {
+if (sel_active && !tween_active && current_frame != sel_last_frame) {
     var _now = current_frame;
     current_frame = sel_last_frame;
     sel_clear();
@@ -167,7 +167,11 @@ if (ctx_open) {
         for (var _r = 0; _r < array_length(ctx_items); _r++) {
             var _rh = (ctx_items[_r][0] == "-") ? 9 : 30;
             if (ctx_items[_r][0] != "-" && pt_in(_mgx, _mgy, ctx_x, _yy, _mw, _rh)) {
-                layer_context_action(ctx_items[_r][0]);
+                switch (ctx_kind) {
+                    case "layer": layer_context_action(ctx_items[_r][0]); break;
+                    case "frame": frame_context_action(ctx_items[_r][0]); break;
+                    case "audio": audio_context_action(ctx_items[_r][0]); break;
+                }
                 _inside = true;
                 break;
             }
@@ -182,11 +186,26 @@ if (ctx_open) {
 
 if (mouse_check_button_pressed(mb_right)) {
     var _lp_y = tl_y + tlh_h;
-    var _rows_area = tl_h - tlh_h;
+    var _rows_area = tl_h - tlh_h - audio_h;
+    var _rc_au_y = tl_y + tl_h - audio_h;
     if (pt_in(_mgx, _mgy, 0, _lp_y, lay_w, _rows_area)) {
         var _l = floor((_mgy - _lp_y + tl_vscroll) / row_h);
         if (_l >= 0 && _l < array_length(layers)) {
             layer_context_open(_mgx, _mgy, _l);
+            exit;
+        }
+    } else if (pt_in(_mgx, _mgy, lay_w, _lp_y + ruler_h, gw - lay_w, tl_h - tlh_h - ruler_h - audio_h)) {
+        var _fc = floor((_mgx - lay_w + tl_scroll) / cell_w);
+        var _fl = floor((_mgy - _lp_y - ruler_h + tl_vscroll) / row_h);
+        if (_fc >= 0 && _fc < total_frames && _fl >= 0 && _fl < array_length(layers)) {
+            frame_context_open(_mgx, _mgy, _fl, _fc);
+            exit;
+        }
+    } else if (audio_sound != -1 && pt_in(_mgx, _mgy, lay_w, _rc_au_y, gw - lay_w, audio_h)) {
+        var _rc_au_w = (audio_trim_end - audio_trim_start) * anim_fps * cell_w;
+        var _rc_au_x = lay_w + audio_offset_fr * cell_w - tl_scroll;
+        if (pt_in(_mgx, _mgy, _rc_au_x, _rc_au_y, _rc_au_w, audio_h)) {
+            audio_context_open(_mgx, _mgy);
             exit;
         }
     }
@@ -205,11 +224,15 @@ if (is_playing) {
         current_frame = (current_frame + 1) mod total_frames;
     }
 }
+audio_sync(is_playing, false);
 
 var _frames_w = gw - lay_w;
-var _fx = current_frame * cell_w;
-if (_fx < tl_scroll) tl_scroll = max(0, _fx - 40);
-else if (_fx > tl_scroll + _frames_w - cell_w) tl_scroll = _fx - _frames_w + cell_w + 40;
+if (current_frame != tl_follow_frame) {
+    var _fx = current_frame * cell_w;
+    if (_fx < tl_scroll) tl_scroll = max(0, _fx - 40);
+    else if (_fx > tl_scroll + _frames_w - cell_w) tl_scroll = _fx - _frames_w + cell_w + 40;
+}
+tl_follow_frame = current_frame;
 tl_scroll = clamp(tl_scroll, 0, max(0, total_frames * cell_w - _frames_w));
 
 if (editing_frames) {
@@ -278,7 +301,7 @@ if (!editing_frames && tf_edit == -1) {
         if (keyboard_check_pressed(ord("X"))) {
             var _tmp = stroke_color; stroke_color = fill_color; fill_color = _tmp;
         }
-        if (keyboard_check_pressed(vk_space)) { is_playing = !is_playing; play_timer = 0; }
+        if (keyboard_check_pressed(vk_space)) { is_playing = !is_playing; play_timer = 0; audio_sync(is_playing, true); }
         if (keyboard_check_pressed(188)) current_frame = max(0, current_frame - 1);              // ,
         if (keyboard_check_pressed(190)) current_frame = min(total_frames - 1, current_frame + 1); // .
     }
@@ -391,8 +414,10 @@ if (_pressed && sel_active && tf_edit == -1 && !ui_click_used) {
 
 var _fr_x = lay_w;
 var _fr_y = tl_y + tlh_h;
+var _au_y = tl_y + tl_h - audio_h;
 var _over_ruler  = pt_in(_mgx, _mgy, _fr_x, _fr_y, gw - lay_w, ruler_h);
-var _over_frames = pt_in(_mgx, _mgy, _fr_x, _fr_y + ruler_h, gw - lay_w, tl_h - tlh_h - ruler_h);
+var _over_frames = pt_in(_mgx, _mgy, _fr_x, _fr_y + ruler_h, gw - lay_w, tl_h - tlh_h - ruler_h - audio_h);
+var _over_audio  = pt_in(_mgx, _mgy, _fr_x, _au_y, gw - _fr_x, audio_h);
 
 if (_pressed && !ui_click_used && open_menu == -1 && !shape_picker_open) {
     if (_over_ruler) {
@@ -404,6 +429,7 @@ if (_pressed && !ui_click_used && open_menu == -1 && !shape_picker_open) {
         if (_c >= 0 && _c < total_frames && _l >= 0 && _l < array_length(layers)) {
             current_frame  = _c;
             selected_layer = _l;
+            audio_sync(is_playing, true);
             var _ccx = _fr_x + _c * cell_w - tl_scroll + cell_w * 0.5;
             var _ccy = _fr_y + ruler_h + _l * row_h - tl_vscroll + row_h * 0.5;
             if (layers[_l].frames[_c] == -1 && point_distance(_mgx, _mgy, _ccx, _ccy) <= 7) {
@@ -412,16 +438,66 @@ if (_pressed && !ui_click_used && open_menu == -1 && !shape_picker_open) {
             }
         }
         ui_click_used = true;
+    } else if (_over_audio && audio_sound != -1) {
+        var _au_clip_w = (audio_trim_end - audio_trim_start) * anim_fps * cell_w;
+        var _au_clip_x = _fr_x + audio_offset_fr * cell_w - tl_scroll;
+        var _au_handle_w = 8;
+        if (pt_in(_mgx, _mgy, _au_clip_x, _au_y, _au_handle_w, audio_h)) {
+            audio_resize = true;
+            audio_resize_side = 1;
+            audio_resize_mx0 = _mgx + tl_scroll;
+            audio_resize_start0 = audio_trim_start;
+            audio_resize_off0 = audio_offset_fr;
+            ui_click_used = true;
+        } else if (pt_in(_mgx, _mgy, _au_clip_x + _au_clip_w - _au_handle_w, _au_y, _au_handle_w, audio_h)) {
+            audio_resize = true;
+            audio_resize_side = 2;
+            audio_resize_mx0 = _mgx + tl_scroll;
+            audio_resize_end0 = audio_trim_end;
+            ui_click_used = true;
+        } else if (pt_in(_mgx, _mgy, _au_clip_x, _au_y, _au_clip_w, audio_h)) {
+            audio_drag = true;
+            audio_drag_mx0 = _mgx + tl_scroll;
+            audio_drag_off0 = audio_offset_fr;
+            ui_click_used = true;
+        }
     }
 }
 if (scrubbing) {
     current_frame = clamp(floor((_mgx - _fr_x + tl_scroll) / cell_w), 0, total_frames - 1);
+    audio_sync(is_playing, true);
     if (!_down) scrubbing = false;
+}
+if (audio_drag || audio_resize) {
+    var _au_edge = 24, _au_pan_spd = 14;
+    var _au_scroll_max = max(0, total_frames * cell_w - _frames_w);
+    if (_mgx < _fr_x + _au_edge) tl_scroll = max(0, tl_scroll - _au_pan_spd);
+    else if (_mgx > gw - _au_edge) tl_scroll = min(_au_scroll_max, tl_scroll + _au_pan_spd);
+}
+if (audio_drag) {
+    var _au_delta_fr = round(((_mgx + tl_scroll) - audio_drag_mx0) / cell_w);
+    audio_offset_fr = max(0, audio_drag_off0 + _au_delta_fr);
+    is_dirty = true;
+    if (!_down) audio_drag = false;
+}
+if (audio_resize) {
+    if (audio_resize_side == 1) {
+        var _delta_fr_l = round(((_mgx + tl_scroll) - audio_resize_mx0) / cell_w);
+        var _new_start = clamp(audio_resize_start0 + _delta_fr_l / anim_fps, 0, audio_trim_end - 1 / anim_fps);
+        var _actual_delta_fr = round((_new_start - audio_resize_start0) * anim_fps);
+        audio_trim_start = _new_start;
+        audio_offset_fr = max(0, audio_resize_off0 + _actual_delta_fr);
+    } else if (audio_resize_side == 2) {
+        var _delta_fr_r = round(((_mgx + tl_scroll) - audio_resize_mx0) / cell_w);
+        audio_trim_end = clamp(audio_resize_end0 + _delta_fr_r / anim_fps, audio_trim_start + 1 / anim_fps, audio_duration);
+    }
+    is_dirty = true;
+    if (!_down) { audio_resize = false; audio_resize_side = 0; }
 }
 
 var _wheel = mouse_wheel_down() - mouse_wheel_up();
 if (_wheel != 0 && open_menu == -1 && !shape_picker_open) {
-    var _rows_h2 = tl_h - tlh_h - ruler_h;
+    var _rows_h2 = tl_h - tlh_h - ruler_h - audio_h;
     if (pt_in(_mgx, _mgy, 0, cv_y, tb_w, cv_h)) {
         tb_scroll = clamp(tb_scroll + _wheel * 46, 0, max(0, tb_content_h - cv_h));
         _wheel = 0;
@@ -490,6 +566,8 @@ if (_over_canvas && _pressed && !panning && !ui_click_used) {
                     sel_moving = true;
                     sel_grab_dx = _cmx - sel_x;
                     sel_grab_dy = _cmy - sel_y;
+                } else if (tween_active) {
+                    editor_toast("Finish or cancel the tween first");
                 } else {
                     sel_clear();
                     sel_marquee = true;
@@ -686,18 +764,20 @@ if (sel_xform != -1) {
 }
 
 if (!editing_frames && tf_edit == -1) {
-    if (sel_active && keyboard_check_pressed(vk_delete)) {
+    if (sel_active && !tween_active && keyboard_check_pressed(vk_delete)) {
         sel_delete();
     }
     if (keyboard_check(vk_control)) {
         if (keyboard_check_pressed(ord("C"))) sel_copy();
-        if (keyboard_check_pressed(ord("X"))) sel_cut();
-        if (keyboard_check_pressed(ord("V"))) sel_paste();
+        if (!tween_active && keyboard_check_pressed(ord("X"))) sel_cut();
+        if (!tween_active && keyboard_check_pressed(ord("V"))) sel_paste();
     }
-    if (keyboard_check_pressed(vk_escape) && sel_active) sel_clear();
+    if (keyboard_check_pressed(vk_escape) && sel_active) {
+        if (tween_active) tween_cancel(); else sel_clear();
+    }
 }
 
-if (tool != "select" && tool != "subselect" && sel_active) sel_clear();
+if (tool != "select" && tool != "subselect" && sel_active && !tween_active) sel_clear();
 
 window_set_cursor(cr_none);
 if (_over_canvas && tool == "brush") {

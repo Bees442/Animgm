@@ -35,6 +35,9 @@ function layer_duplicate(_li) {
     for (var _i = 0; _i < array_length(_src.frames); _i++) {
         _copy.frames[_i] = kf_clone(_src.frames[_i]);
     }
+    for (var _ti = 0; _ti < array_length(_src.tweens); _ti++) {
+        array_push(_copy.tweens, [_src.tweens[_ti][0], _src.tweens[_ti][1]]);
+    }
     array_insert(layers, _li, _copy);
     selected_layer = _li;
     is_dirty = true;
@@ -61,6 +64,7 @@ function layer_move(_li, _dir) {
 }
 
 function layer_context_open(_x, _y, _li) {
+    ctx_kind = "layer";
     ctx_layer = _li;
     selected_layer = _li;
     ctx_items = [

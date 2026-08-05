@@ -329,6 +329,44 @@ for (var _g = 0; _g < 3; _g++) {
     _py += 28 + 16;
 }
 
+if (tween_active) {
+    var _tw_hint = "Tween: pose the end on another frame";
+    draw_set_font(fnt_ui_sm);
+    draw_set_colour(COL_TEXT_MUTED);
+    draw_text_ext(_cx0, _py, _tw_hint, 14, _cw0);
+    _py += 32;
+    var _tw_bw = (_cw0 - 8) * 0.5;
+    var tw_finish_rect = [_cx0, _py, _tw_bw, 28];
+    var tw_cancel_rect = [_cx0 + _tw_bw + 8, _py, _tw_bw, 28];
+    var _tw_fin_hover = pt_in(_mgx, _mgy, tw_finish_rect[0], tw_finish_rect[1], tw_finish_rect[2], tw_finish_rect[3]);
+    var _tw_can_hover = pt_in(_mgx, _mgy, tw_cancel_rect[0], tw_cancel_rect[1], tw_cancel_rect[2], tw_cancel_rect[3]);
+    ui_roundrect(tw_finish_rect[0], tw_finish_rect[1], tw_finish_rect[2], tw_finish_rect[3], 4, _tw_fin_hover ? COL_SECONDARY : COL_PRIMARY);
+    ui_roundrect(tw_cancel_rect[0], tw_cancel_rect[1], tw_cancel_rect[2], tw_cancel_rect[3], 4, _tw_can_hover ? COL_HOVER : COL_BORDER_LT);
+    draw_set_halign(fa_center); draw_set_valign(fa_middle);
+    draw_set_font(fnt_ui_sm);
+    draw_set_colour(c_white);
+    draw_text(tw_finish_rect[0] + _tw_bw * 0.5, _py + 14, "Finish Tween");
+    draw_set_colour(COL_TEXT);
+    draw_text(tw_cancel_rect[0] + _tw_bw * 0.5, _py + 14, "Cancel");
+    draw_set_halign(fa_left); draw_set_valign(fa_top);
+    if (ui_clicked(tw_finish_rect[0], tw_finish_rect[1], tw_finish_rect[2], tw_finish_rect[3])) tween_finish();
+    else if (ui_clicked(tw_cancel_rect[0], tw_cancel_rect[1], tw_cancel_rect[2], tw_cancel_rect[3])) tween_cancel();
+    _py += 28 + 16;
+} else {
+    var tw_start_rect = [_cx0, _py, _cw0, 28];
+    var _tw_can_start = tween_can_start();
+    var _tw_start_hover = _tw_can_start && pt_in(_mgx, _mgy, tw_start_rect[0], tw_start_rect[1], tw_start_rect[2], tw_start_rect[3]);
+    ui_roundrect(tw_start_rect[0], tw_start_rect[1], tw_start_rect[2], tw_start_rect[3], 4,
+        !_tw_can_start ? COL_BORDER_LT : (_tw_start_hover ? COL_SECONDARY : COL_PRIMARY));
+    draw_set_halign(fa_center); draw_set_valign(fa_middle);
+    draw_set_font(fnt_ui_sm);
+    draw_set_colour(_tw_can_start ? c_white : COL_TEXT_MUTED);
+    draw_text(tw_start_rect[0] + _cw0 * 0.5, _py + 14, "Start Tween");
+    draw_set_halign(fa_left); draw_set_valign(fa_top);
+    if (_tw_can_start && ui_clicked(tw_start_rect[0], tw_start_rect[1], tw_start_rect[2], tw_start_rect[3])) tween_start();
+    _py += 28 + 16;
+}
+
 ui_rect(_pp_x + 1, _py, pp_w - 1, 1, COL_BORDER);
 _py += 1;
 ui_rect(_pp_x + 1, _py, pp_w - 1, 33, ui_hover(_pp_x, _py, pp_w, 33) ? COL_HOVER : COL_BG_PANEL);
@@ -374,7 +412,7 @@ if (is_playing) ui_roundrect(_hb_x, _hb_y, 24, 24, 2, COL_PRIMARY, 0.1);
 else if (ui_hover(_hb_x, _hb_y, 24, 24)) ui_roundrect(_hb_x, _hb_y, 24, 24, 2, COL_HOVER);
 ui_icon(is_playing ? spr_ic_pause : spr_ic_play, _hb_x + 12, _hb_y + 12, 20,
         is_playing ? COL_PRIMARY : (ui_hover(_hb_x, _hb_y, 24, 24) ? COL_TEXT : COL_TEXT_2));
-if (ui_clicked(_hb_x, _hb_y, 24, 24)) { is_playing = !is_playing; play_timer = 0; }
+if (ui_clicked(_hb_x, _hb_y, 24, 24)) { is_playing = !is_playing; play_timer = 0; audio_sync(is_playing, true); }
 _hb_x += 28;
 if (ui_hover(_hb_x, _hb_y, 24, 24)) ui_roundrect(_hb_x, _hb_y, 24, 24, 2, COL_HOVER);
 ui_icon(spr_ic_skip_forward, _hb_x + 12, _hb_y + 12, 16, ui_hover(_hb_x, _hb_y, 24, 24) ? COL_TEXT : COL_TEXT_2);
@@ -421,7 +459,7 @@ var _fr_x = lay_w;
 var _fr_y = tl_y + tlh_h;
 var _fr_w = gw - lay_w;
 var _grid_y = _fr_y + ruler_h;
-var _rows_h = tl_h - tlh_h - ruler_h;
+var _rows_h = tl_h - tlh_h - ruler_h - audio_h;
 
 var _c0 = max(0, floor(tl_scroll / cell_w));
 var _c1 = min(total_frames - 1, floor((tl_scroll + _fr_w) / cell_w));
@@ -431,6 +469,17 @@ var _l1 = min(array_length(layers) - 1, floor((tl_vscroll + _rows_h) / row_h));
 for (var _l = _l0; _l <= _l1; _l++) {
     var _ry = _grid_y + _l * row_h - tl_vscroll;
     var _lay2 = layers[_l];
+
+    for (var _twi = 0; _twi < array_length(_lay2.tweens); _twi++) {
+        var _tw = _lay2.tweens[_twi];
+        var _tf0 = _tw[0], _tf1 = _tw[1];
+        if (_lay2.frames[_tf0] == -1 || _lay2.frames[_tf1] == -1) continue;
+        if (_tf1 < _c0 || _tf0 > _c1) continue;
+        var _tx0 = _fr_x + _tf0 * cell_w - tl_scroll;
+        var _tx1 = _fr_x + (_tf1 + 1) * cell_w - tl_scroll;
+        ui_rect(_tx0, _ry + 1, _tx1 - _tx0, row_h - 2, COL_TWEEN, 0.18);
+    }
+
     for (var _c = _c0; _c <= _c1; _c++) {
         var _cx = _fr_x + _c * cell_w - tl_scroll;
         if (_c == current_frame) ui_rect(_cx, _ry, cell_w, row_h, COL_FRAME_HL, 0.15);
@@ -450,6 +499,24 @@ for (var _l = _l0; _l <= _l1; _l++) {
             draw_circle_colour(_ccx, _ccy, 6, COL_PRIMARY, COL_PRIMARY, true);
             draw_set_alpha(1);
             ui_icon(spr_ic_plus, _ccx, _ccy, 8, COL_TEXT);
+        }
+    }
+
+    for (var _twj = 0; _twj < array_length(_lay2.tweens); _twj++) {
+        var _tw2 = _lay2.tweens[_twj];
+        var _tf0b = _tw2[0], _tf1b = _tw2[1];
+        if (_lay2.frames[_tf0b] == -1 || _lay2.frames[_tf1b] == -1) continue;
+        if (_tf1b < _c0 || _tf0b > _c1) continue;
+        var _ax0 = _fr_x + _tf0b * cell_w - tl_scroll + cell_w * 0.5;
+        var _ax1 = _fr_x + _tf1b * cell_w - tl_scroll + cell_w * 0.5;
+        var _acy = _ry + row_h * 0.5;
+        if (abs(_ax1 - _ax0) > 10) {
+            draw_set_colour(COL_TWEEN);
+            draw_line_width(_ax0, _acy, _ax1, _acy, 2);
+            var _adir = sign(_ax1 - _ax0);
+            draw_triangle_colour(_ax1 - _adir * 7, _acy - 4, _ax1 - _adir * 7, _acy + 4, _ax1, _acy,
+                COL_TWEEN, COL_TWEEN, COL_TWEEN, false);
+            draw_set_colour(c_white);
         }
     }
     ui_rect(_fr_x, _ry + row_h - 1, _fr_w, 1, COL_BORDER);
@@ -505,6 +572,50 @@ for (var _l = _l0; _l <= _l1; _l++) {
     else if (ui_clicked(_lk_x, _ry + 2, 20, 20)) _lay3.locked = !_lay3.locked;
     else if (ui_clicked(0, _ry, lay_w, row_h)) selected_layer = _l;
     ui_rect(0, _ry + row_h - 1, lay_w, 1, COL_BORDER);
+}
+
+var _au_y = tl_y + tl_h - audio_h;
+ui_rect(0, _au_y, gw, audio_h, COL_BG_PANEL_DK);
+ui_rect(0, _au_y, gw, 1, COL_BORDER);
+draw_set_font(fnt_ui_sm);
+draw_set_colour(COL_TEXT_2);
+draw_set_valign(fa_middle);
+draw_text(8, _au_y + audio_h * 0.5, "Audio");
+draw_set_valign(fa_top);
+if (audio_sound != -1) {
+    var _au_clip_w = (audio_trim_end - audio_trim_start) * anim_fps * cell_w;
+    var _au_clip_x = _fr_x + audio_offset_fr * cell_w - tl_scroll;
+    var _au_x0 = max(_au_clip_x, _fr_x);
+    var _au_x1 = min(_au_clip_x + _au_clip_w, gw);
+    if (_au_x1 > _au_x0) {
+        var _au_hover = pt_in(_mgx, _mgy, _au_x0, _au_y + 2, _au_x1 - _au_x0, audio_h - 4);
+        ui_roundrect(_au_x0, _au_y + 2, _au_x1 - _au_x0, audio_h - 4, 4, (audio_drag || _au_hover) ? COL_SECONDARY : COL_PRIMARY);
+        draw_set_font(fnt_ui_sm);
+        draw_set_colour(c_white);
+        draw_set_valign(fa_middle);
+        draw_text(_au_x0 + 8, _au_y + audio_h * 0.5, ui_text_fit(filename_name(audio_path), (_au_x1 - _au_x0) - 16));
+        draw_set_valign(fa_top);
+
+        var _au_handle_w = 8;
+        var _au_hx_l = _au_clip_x;
+        var _au_hx_r = _au_clip_x + _au_clip_w - _au_handle_w;
+        if (_au_hx_l + _au_handle_w > _fr_x && _au_hx_l < gw) {
+            var _au_hover_l = pt_in(_mgx, _mgy, _au_hx_l, _au_y, _au_handle_w, audio_h);
+            ui_rect(max(_au_hx_l, _fr_x), _au_y + 2, min(_au_hx_l + _au_handle_w, gw) - max(_au_hx_l, _fr_x), audio_h - 4,
+                    ((audio_resize && audio_resize_side == 1) || _au_hover_l) ? c_white : COL_BORDER_LT);
+        }
+        if (_au_hx_r + _au_handle_w > _fr_x && _au_hx_r < gw) {
+            var _au_hover_r = pt_in(_mgx, _mgy, _au_hx_r, _au_y, _au_handle_w, audio_h);
+            ui_rect(max(_au_hx_r, _fr_x), _au_y + 2, min(_au_hx_r + _au_handle_w, gw) - max(_au_hx_r, _fr_x), audio_h - 4,
+                    ((audio_resize && audio_resize_side == 2) || _au_hover_r) ? c_white : COL_BORDER_LT);
+        }
+    }
+} else {
+    draw_set_font(fnt_ui_sm);
+    draw_set_colour(COL_TEXT_MUTED);
+    draw_set_valign(fa_middle);
+    draw_text(_fr_x + 8, _au_y + audio_h * 0.5, "No audio (File > Import Audio...)");
+    draw_set_valign(fa_top);
 }
 
 if (shape_picker_open) {

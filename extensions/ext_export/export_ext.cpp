@@ -358,3 +358,53 @@ GMEXPORT double mp4enc_close() {
 GMEXPORT const char* mp4enc_last_error() {
     return g_mp4LastError.c_str();
 }
+
+// Decodes an MP3 to PCM and writes it as a WAV so GML's existing WAV import
+// path handles it unchanged.
+#define DR_MP3_IMPLEMENTATION
+#include "thirdparty/dr_mp3/dr_mp3.h"
+
+GMEXPORT double mp3_decode_to_wav(const char* mp3_path, const char* wav_path) {
+    drmp3_config cfg;
+    drmp3_uint64 frameCount = 0;
+    drmp3_int16* pcm = drmp3_open_file_and_read_pcm_frames_s16(mp3_path, &cfg, &frameCount, NULL);
+    if (!pcm || frameCount == 0 || cfg.channels == 0) {
+        if (pcm) drmp3_free(pcm, NULL);
+        return 0.0;
+    }
+
+    uint32_t channels = cfg.channels;
+    uint32_t rate = cfg.sampleRate;
+    uint64_t dataBytes = frameCount * channels * sizeof(drmp3_int16);
+
+    FILE* f = fopen(wav_path, "wb");
+    if (!f) { drmp3_free(pcm, NULL); return 0.0; }
+
+    uint32_t byteRate = rate * channels * 2;
+    uint16_t blockAlign = (uint16_t)(channels * 2);
+    uint32_t riffSize = (uint32_t)(36 + dataBytes);
+    uint32_t fmtSize = 16;
+    uint16_t audioFormat = 1;
+    uint16_t ch16 = (uint16_t)channels;
+    uint16_t bits = 16;
+    uint32_t dataSize32 = (uint32_t)dataBytes;
+
+    fwrite("RIFF", 1, 4, f);
+    fwrite(&riffSize, 4, 1, f);
+    fwrite("WAVE", 1, 4, f);
+    fwrite("fmt ", 1, 4, f);
+    fwrite(&fmtSize, 4, 1, f);
+    fwrite(&audioFormat, 2, 1, f);
+    fwrite(&ch16, 2, 1, f);
+    fwrite(&rate, 4, 1, f);
+    fwrite(&byteRate, 4, 1, f);
+    fwrite(&blockAlign, 2, 1, f);
+    fwrite(&bits, 2, 1, f);
+    fwrite("data", 1, 4, f);
+    fwrite(&dataSize32, 4, 1, f);
+    fwrite(pcm, 1, (size_t)dataBytes, f);
+    fclose(f);
+
+    drmp3_free(pcm, NULL);
+    return 1.0;
+}

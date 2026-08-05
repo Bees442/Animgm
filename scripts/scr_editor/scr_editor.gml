@@ -44,6 +44,7 @@ function editor_new_project() {
         var _fr = layers[_li].frames;
         for (var _i = 0; _i < array_length(_fr); _i++) kf_free(_fr[_i]);
     }
+    audio_clear();
     layers = [layer_make("Layer 1", 30)];
     layers[0].frames[0] = keyframe_make();
     selected_layer = 0;
@@ -52,7 +53,6 @@ function editor_new_project() {
     is_playing     = false;
     project_name   = "Untitled";
     zoom = 1; pan_x = 0; pan_y = 0;
-    undo_stack = [];
-    redo_stack = [];
+    undo_clear();
     tl_scroll  = 0;
 }

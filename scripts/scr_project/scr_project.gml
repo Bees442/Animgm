@@ -1,6 +1,6 @@
 #macro ANST_MAGIC   0x32534E41
 #macro ANST_MAGIC_V1 0x31534E41
-#macro ANST_VERSION 3
+#macro ANST_VERSION 5
 #macro ANRC_MAGIC   0x31524E41
 
 function buf_write_str(_buf, _s) {
@@ -122,6 +122,25 @@ function project_save(_path) {
         }
     }
 
+    var _has_audio = (audio_sound != -1);
+    buffer_write(_buf, buffer_u8, _has_audio ? 1 : 0);
+    if (_has_audio) {
+        buf_write_str(_buf, audio_path);
+        buffer_write(_buf, buffer_u32, audio_offset_fr);
+        buffer_write(_buf, buffer_u32, round(audio_trim_start * 1000));
+        buffer_write(_buf, buffer_u32, round(audio_trim_end * 1000));
+    }
+
+    buffer_write(_buf, buffer_u32, array_length(layers));
+    for (var _tli = 0; _tli < array_length(layers); _tli++) {
+        var _tws = layers[_tli].tweens;
+        buffer_write(_buf, buffer_u32, array_length(_tws));
+        for (var _ti = 0; _ti < array_length(_tws); _ti++) {
+            buffer_write(_buf, buffer_u32, _tws[_ti][0]);
+            buffer_write(_buf, buffer_u32, _tws[_ti][1]);
+        }
+    }
+
     buffer_save(_buf, _path);
     buffer_delete(_buf);
 
@@ -142,7 +161,7 @@ function project_load(_path) {
     if (_m == ANST_MAGIC_V1) { return project_load_v1(_buf, _path); }
     if (_m != ANST_MAGIC) { buffer_delete(_buf); return false; }
     var _ver = buffer_read(_buf, buffer_u32);
-    if (_ver < 1 || _ver > 3) { buffer_delete(_buf); return false; }
+    if (_ver < 1 || _ver > ANST_VERSION) { buffer_delete(_buf); return false; }
     var _compressed = (_ver >= 2);
     var _has_opacity = (_ver >= 3);
 
@@ -160,6 +179,7 @@ function project_load(_path) {
         var _fr = layers[_li].frames;
         for (var _i = 0; _i < array_length(_fr); _i++) kf_free(_fr[_i]);
     }
+    audio_clear();
 
     canvas_w = _w; canvas_h = _h; anim_fps = _fps;
     total_frames = _tf; project_name = _name;
@@ -219,13 +239,40 @@ function project_load(_path) {
         }
         layers[_li].frames[_fi] = _kf;
     }
+
+    if (_ver >= 4 && buf_can_read(_buf, 1)) {
+        var _has_audio = buffer_read(_buf, buffer_u8);
+        if (_has_audio && buf_can_read(_buf, 4)) {
+            var _a_path = buf_read_str(_buf);
+            if (buf_can_read(_buf, 12)) {
+                var _a_offset = buffer_read(_buf, buffer_u32);
+                var _a_start_ms = buffer_read(_buf, buffer_u32);
+                var _a_end_ms = buffer_read(_buf, buffer_u32);
+                audio_restore(_a_path, _a_offset, _a_start_ms / 1000, _a_end_ms / 1000);
+            }
+        }
+    }
+
+    if (_ver >= 5 && buf_can_read(_buf, 4)) {
+        var _tw_lc = buffer_read(_buf, buffer_u32);
+        for (var _tl = 0; _tl < _tw_lc; _tl++) {
+            if (!buf_can_read(_buf, 4)) break;
+            var _tw_n = buffer_read(_buf, buffer_u32);
+            for (var _tk = 0; _tk < _tw_n; _tk++) {
+                if (!buf_can_read(_buf, 8)) break;
+                var _tw_f0 = buffer_read(_buf, buffer_u32);
+                var _tw_f1 = buffer_read(_buf, buffer_u32);
+                if (_tl < array_length(layers)) array_push(layers[_tl].tweens, [_tw_f0, _tw_f1]);
+            }
+        }
+    }
     buffer_delete(_buf);
 
     selected_layer = 0;
     current_frame  = 0;
     is_playing     = false;
     zoom = 1; pan_x = 0; pan_y = 0;
-    undo_stack = []; redo_stack = [];
+    undo_clear();
     project_path = _path;
     is_dirty = false;
     project_add_recent(_path);
@@ -251,6 +298,7 @@ function project_load_v1(_buf, _path) {
         var _fr = layers[_li].frames;
         for (var _i = 0; _i < array_length(_fr); _i++) kf_free(_fr[_i]);
     }
+    audio_clear();
 
     canvas_w = _header.width; canvas_h = _header.height;
     anim_fps = _header.fps;   total_frames = _header.total_frames;
@@ -296,7 +344,7 @@ function project_load_v1(_buf, _path) {
 
     selected_layer = 0; current_frame = 0; is_playing = false;
     zoom = 1; pan_x = 0; pan_y = 0;
-    undo_stack = []; redo_stack = [];
+    undo_clear();
     project_path = _path; is_dirty = false;
     project_add_recent(_path);
     return true;
@@ -384,6 +432,7 @@ function project_new(_name, _w, _h, _fps, _frames) {
         var _fr = layers[_li].frames;
         for (var _i = 0; _i < array_length(_fr); _i++) kf_free(_fr[_i]);
     }
+    audio_clear();
     project_name  = _name;
     canvas_w      = _w;
     canvas_h      = _h;
@@ -394,7 +443,7 @@ function project_new(_name, _w, _h, _fps, _frames) {
     current_frame  = 0;
     is_playing     = false;
     zoom = 1; pan_x = 0; pan_y = 0;
-    undo_stack = []; redo_stack = [];
+    undo_clear();
     project_path = "";
     is_dirty = false;
 }

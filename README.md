@@ -30,6 +30,10 @@ A 2D frame-by-frame animation program built in **GameMaker**
 - **Save / Load** — compact binary `.anst` format (deflate-compressed raster
   frames, cropped to their bounding box).
 - **MP4 export** — each frame is rendered straight to a surface and encoded
+  in-process (OpenH264 + minimp4), no external ffmpeg.exe.
+- **Audio track** — import a `.wav`, `.ogg`, or `.mp3` (decoded via dr_mp3),
+  drag it along the timeline to reposition/trim it, played back in sync
+  while scrubbing/playing in the editor.
 
 ## Requirements
 
@@ -42,13 +46,14 @@ Open `animgm.yyp` in the GameMaker IDE and run the **Windows** target.
 
 ## File format (`.anst`)
 
-Binary. Header (magic `ANS2` + version), then project metadata, layers, and
+Binary. Header then project metadata, layers, and
 per-keyframe raster blobs. Frames are stored as the deflate-compressed ARGB
 
 ## Planned
 
 - **Export to more formats** — PNG sequence, GIF, WebM (currently MP4 only).
-- **Audio import** — load a soundtrack and mux it into MP4 exports.
-- **Auto-select** — select a region by colour similarity, not
+- **Audio in MP4 export** — the editor imports/plays audio already; muxing it
+  into the exported MP4 as raw PCM is not done yet.
+- **Auto-select (magic wand)** — select a region by colour similarity, not
   just the rectangular marquee.
 - **Skeletal animation** — bones, hierarchy, and pixel-to-bone binding as an
