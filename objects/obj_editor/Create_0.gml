@@ -160,6 +160,7 @@ win_to_x = 0; win_to_y = 0; win_to_w = 0; win_to_h = 0;
 tl_scroll  = 0;
 tl_follow_frame = current_frame;
 tl_vscroll = 0;
+tl_follow_frame = -1;
 tb_scroll  = 0;
 tb_content_h = 8 + array_length(tool_ids) * 46 + 17 + 60 + 8;
 

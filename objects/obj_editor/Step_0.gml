@@ -231,8 +231,8 @@ if (current_frame != tl_follow_frame) {
     var _fx = current_frame * cell_w;
     if (_fx < tl_scroll) tl_scroll = max(0, _fx - 40);
     else if (_fx > tl_scroll + _frames_w - cell_w) tl_scroll = _fx - _frames_w + cell_w + 40;
+    tl_follow_frame = current_frame;
 }
-tl_follow_frame = current_frame;
 tl_scroll = clamp(tl_scroll, 0, max(0, total_frames * cell_w - _frames_w));
 
 if (editing_frames) {
@@ -792,3 +792,4 @@ if (_over_canvas && tool == "brush") {
 } else {
     cursor_mode = "arrow";
 }
+

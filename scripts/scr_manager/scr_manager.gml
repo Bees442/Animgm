@@ -1,6 +1,6 @@
 function pm_open_editor() {
     screen = "editor";
-    tb_scroll = 0; tl_scroll = 0; tl_vscroll = 0;
+    tb_scroll = 0; tl_scroll = 0; tl_vscroll = 0; tl_follow_frame = -1;
     editor_fit_canvas();
 }
 

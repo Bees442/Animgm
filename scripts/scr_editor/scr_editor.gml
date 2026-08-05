@@ -55,4 +55,5 @@ function editor_new_project() {
     zoom = 1; pan_x = 0; pan_y = 0;
     undo_clear();
     tl_scroll  = 0;
+    tl_follow_frame = -1;
 }
