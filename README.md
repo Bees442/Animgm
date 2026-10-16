@@ -33,6 +33,20 @@ A 2D frame-by-frame animation program built in **GameMaker**
 - **Audio track** — import a `.wav`, `.ogg`, or `.mp3,
   drag it along the timeline to reposition/trim it, played back in sync
   while scrubbing/playing in the editor..
+## Coming soon. At best at the end of October 
+- **Skeletal animation** -  a real bone hierarchy with its own
+  animation curves, not a one-shot bake:
+  - Bones are built from a selection, from a whole layer's artwork
+    ("Use as Bone"), or as empty bones to use as a root/hip.
+  - Each bone has a full local transform (translate / rotate / scale) relative
+    to its parent, a shaft with grabbable pivot and tip handles, its own draw
+    order and a visibility toggle.
+- **Mesh deformation.** - Right-click a bone → *Add Mesh* lays a grid over its
+    artwork and auto-weights every vertex to the nearest bones (up to four
+    each, inverse-square falloff). The artwork then bends across the chain via
+    linear blend skinning instead of snapping at the joints; the selected bone
+    shows its deformed wireframe. *Rebind Weights* re-derives the weights after
+    the rest pose changes.
 
 
 ## File format (`.anst`)
@@ -42,9 +56,5 @@ per-keyframe raster blobs. Frames are stored as the deflate-compressed ARGB
 
 ## Planned
 
-- **Export to more formats** - PNG sequence, GIF, WebM (currently MP4 only).
-- **Audio in MP4 export** + the editor imports/plays audio already; muxing it
-  into the exported MP4 as raw PCM is not done yet.
-- **Auto-select** - select a region by colour similarity, not
-  just the rectangular marquee.
-- **Skeletal animation (Work in progress)** - bones, hierarchy, and pixel-to-bone binding as an
+- **Text**
+- **Vector Graphics** - Working with vector graphics, importing SVG, and various tools for working with vector graphics
